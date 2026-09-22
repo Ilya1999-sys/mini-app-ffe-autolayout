@@ -1,133 +1,64 @@
 const TOTAL_QUESTIONS = 7;
 
+const SPRITE = {
+  imageUrl: "./assets/figma-sprite.png",
+  width: 2061,
+  height: 8924,
+};
+
+// Coordinates from Figma section screenshot (node 3:172).
+// The screenshot includes 40px padding around the selection.
+const PAD = 40;
+const frame = (x, y) => ({ x: x + PAD, y: y + PAD, w: 390, h: 844 });
+
+const frames = {
+  welcome: frame(156, 545),
+  questions: [
+    frame(585, 545),
+    frame(585, 1475),
+    frame(585, 2405),
+    frame(585, 3335),
+    frame(585, 4265),
+    frame(585, 5195),
+    frame(585, 6125),
+  ],
+  success: [
+    frame(1006, 545),
+    frame(1006, 1475),
+    frame(1006, 2405),
+    frame(1006, 3335),
+    frame(1006, 4265),
+    frame(1006, 5195),
+    frame(1006, 6125),
+  ],
+  lost: [
+    frame(1435, 545),
+    frame(1435, 1475),
+    frame(1435, 2405),
+    frame(1435, 3335),
+    frame(1435, 4265),
+    frame(1435, 5195),
+    frame(1435, 6125),
+  ],
+  final: frame(585, 7018),
+};
+
 const questions = [
-  {
-    id: 1,
-    progress: "Задание 1/7",
-    text: "Где изображён gap внутри автолейаута?",
-    options: [
-      {
-        title: "Вариант 1",
-        note: "Отступ между заголовком и кнопкой показан стрелкой.",
-      },
-      {
-        title: "Вариант 2",
-        note: "Стрелка показывает другой тип отступа в карточке.",
-      },
-    ],
-    correctIndex: 0,
-    explanation:
-      "Gap управляет расстоянием между элементами внутри Auto Layout. В данном случае это отступ между заголовком и кнопкой.",
-  },
-  {
-    id: 2,
-    progress: "Задание 2/7",
-    text: "Где изображён gap внутри автолейаута?",
-    options: [
-      {
-        title: "Вариант 1",
-        note: "Показан интерлиньяж внутри текстового блока.",
-      },
-      {
-        title: "Вариант 2",
-        note: "Показан отступ между заголовком и описанием.",
-      },
-    ],
-    correctIndex: 1,
-    explanation:
-      "В первом варианте показан интерлиньяж — межстрочное расстояние. А gap — это отступ между заголовком и описанием во втором варианте.",
-  },
-  {
-    id: 3,
-    progress: "Задание 3/7",
-    text: "В каком случае лучше использовать hug (или fixed) для ширины заголовка?",
-    options: [
-      {
-        title: "Вариант 1",
-        note: "Широкий заголовок занимает большую часть карточки.",
-      },
-      {
-        title: "Вариант 2",
-        note: "Заголовок фиксирован/по контенту, а описанию оставлено больше места.",
-      },
-    ],
-    correctIndex: 1,
-    explanation:
-      "Во втором варианте заголовок лучше держать на hug/fixed, а описанию дать больше пространства.",
-  },
-  {
-    id: 4,
-    progress: "Задание 4/7",
-    text: "В каком случае лучше использовать fill для ширины текста?",
-    options: [
-      {
-        title: "Вариант 1",
-        note: "Заголовок и описание занимают доступную ширину блока.",
-      },
-      {
-        title: "Вариант 2",
-        note: "Описание зажато рядом с картинкой и заголовком.",
-      },
-    ],
-    correctIndex: 0,
-    explanation:
-      "В первом варианте text лучше поставить на fill, чтобы он занимал свободное пространство и оставался читаемым.",
-  },
-  {
-    id: 5,
-    progress: "Задание 5/7",
-    text: "Где изображён padding внутри карточки с автолейаутом?",
-    options: [
-      {
-        title: "Вариант 1",
-        note: "Показано межбуквенное расстояние в заголовке.",
-      },
-      {
-        title: "Вариант 2",
-        note: "Показан внутренний отступ контента от края карточки.",
-      },
-    ],
-    correctIndex: 1,
-    explanation:
-      "Padding — это внутренний отступ от края контейнера до содержимого. В этом задании верный вариант — второй.",
-  },
-  {
-    id: 6,
-    progress: "Задание 6/7",
-    text: "Где изображено горизонтальное выравнивание элементов с включённым переносом?",
-    options: [
-      {
-        title: "Вариант 1",
-        note: "Теги уложены в строгую двухколоночную сетку.",
-      },
-      {
-        title: "Вариант 2",
-        note: "Теги переносятся на следующую строку по мере нехватки места.",
-      },
-    ],
-    correctIndex: 1,
-    explanation:
-      "Во втором варианте включён перенос строк, поэтому теги 4 и 5 уезжают ниже.",
-  },
-  {
-    id: 7,
-    progress: "Задание 7/7",
-    text: "В каком варианте сетки используется hug для ширины первой колонки?",
-    options: [
-      {
-        title: "Вариант 1",
-        note: "Первая колонка hug, вторая тянется на оставшуюся ширину.",
-      },
-      {
-        title: "Вариант 2",
-        note: "Hug стоит у второй колонки, а первая растягивается.",
-      },
-    ],
-    correctIndex: 0,
-    explanation:
-      "В первом варианте hug применён к первой колонке, а вторая заполняет остаток ширины.",
-  },
+  { correctIndex: 0, options: [{ x: 16, y: 164, w: 358, h: 164 }, { x: 16, y: 340, w: 358, h: 172 }] },
+  { correctIndex: 1, options: [{ x: 16, y: 164, w: 358, h: 250 }, { x: 16, y: 426, w: 358, h: 210 }] },
+  { correctIndex: 1, options: [{ x: 16, y: 188, w: 358, h: 182 }, { x: 16, y: 382, w: 358, h: 122 }] },
+  { correctIndex: 0, options: [{ x: 16, y: 164, w: 358, h: 278 }, { x: 16, y: 454, w: 358, h: 106 }] },
+  { correctIndex: 1, options: [{ x: 16, y: 164, w: 358, h: 144 }, { x: 16, y: 320, w: 358, h: 172 }] },
+  { correctIndex: 1, options: [{ x: 16, y: 188, w: 358, h: 152 }, { x: 16, y: 350, w: 358, h: 110 }] },
+  { correctIndex: 0, options: [{ x: 16, y: 164, w: 358, h: 152 }, { x: 16, y: 326, w: 358, h: 152 }] },
 ];
+
+const buttonHitboxes = {
+  welcomeStart: { x: 16, y: 776, w: 358, h: 52 },
+  answer: { x: 16, y: 776, w: 358, h: 52 },
+  next: { x: 16, y: 776, w: 358, h: 52 },
+  finalBenefit: { x: 16, y: 776, w: 358, h: 52 },
+};
 
 const state = {
   screen: "welcome", // welcome | question | result | final
@@ -141,9 +72,7 @@ const state = {
 const screenNode = document.getElementById("screen");
 
 function getTelegramApp() {
-  if (window.Telegram && window.Telegram.WebApp) {
-    return window.Telegram.WebApp;
-  }
+  if (window.Telegram && window.Telegram.WebApp) return window.Telegram.WebApp;
   return null;
 }
 
@@ -154,7 +83,39 @@ function initTelegram() {
   tg.expand();
 }
 
+function createFrameLayer(frameRect) {
+  const layer = document.createElement("div");
+  layer.className = "frame-layer";
+  layer.style.backgroundImage = `url(${SPRITE.imageUrl})`;
+  layer.style.backgroundSize = `${SPRITE.width}px ${SPRITE.height}px`;
+  layer.style.backgroundPosition = `-${frameRect.x}px -${frameRect.y}px`;
+  return layer;
+}
+
+function createHotspot({ x, y, w, h }, onClick, className = "hotspot") {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.className = className;
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  el.style.width = `${w}px`;
+  el.style.height = `${h}px`;
+  if (onClick) el.addEventListener("click", onClick);
+  return el;
+}
+
+function createSelectedOverlay(box) {
+  const el = document.createElement("div");
+  el.className = "selected-overlay";
+  el.style.left = `${box.x}px`;
+  el.style.top = `${box.y}px`;
+  el.style.width = `${box.w}px`;
+  el.style.height = `${box.h}px`;
+  return el;
+}
+
 function render() {
+  screenNode.innerHTML = "";
   if (state.screen === "welcome") renderWelcome();
   if (state.screen === "question") renderQuestion();
   if (state.screen === "result") renderResult();
@@ -162,56 +123,44 @@ function render() {
 }
 
 function renderWelcome() {
-  screenNode.innerHTML = `
-    <div class="topbar">Figma boy Trainer</div>
-    <div class="hero">Фигма-бой будет тут<br />после подбора референсов</div>
-    <h1 class="title">Figa хочет, чтобы вы изучили автолейаут быстро и легко</h1>
-    <p class="subtitle">7 коротких задач по Auto Layout. За правильные ответы — промокод на скидку.</p>
-    <div class="spacer"></div>
-    <button class="btn btn-primary" id="startBtn">Начать тест</button>
-  `;
-  document.getElementById("startBtn").addEventListener("click", () => {
-    state.screen = "question";
-    render();
-  });
+  const wrap = document.createElement("div");
+  wrap.className = "screen-wrap";
+  wrap.appendChild(createFrameLayer(frames.welcome));
+  wrap.appendChild(
+    createHotspot(buttonHitboxes.welcomeStart, () => {
+      state.screen = "question";
+      render();
+    }),
+  );
+  screenNode.appendChild(wrap);
 }
 
 function renderQuestion() {
   const question = questions[state.questionIndex];
-  const optionsHtml = question.options
-    .map((option, idx) => {
-      const selectedClass = state.selectedOptionIndex === idx ? "selected" : "";
-      return `
-        <button class="answer ${selectedClass}" data-option="${idx}">
-          <span class="answer-label">${option.title}</span>
-          <p class="answer-note">${option.note}</p>
-        </button>
-      `;
-    })
-    .join("");
+  const wrap = document.createElement("div");
+  wrap.className = "screen-wrap";
+  wrap.appendChild(createFrameLayer(frames.questions[state.questionIndex]));
 
-  const disabled = state.selectedOptionIndex === null ? "disabled" : "";
-  screenNode.innerHTML = `
-    <div class="topbar">${question.progress}</div>
-    <h2 class="question">${question.text}</h2>
-    <div class="answers">${optionsHtml}</div>
-    <div class="spacer"></div>
-    <button class="btn btn-primary" id="answerBtn" ${disabled}>Ответ</button>
-  `;
-
-  document.querySelectorAll(".answer").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.selectedOptionIndex = Number(button.dataset.option);
-      renderQuestion();
-    });
+  question.options.forEach((optionBox, idx) => {
+    wrap.appendChild(
+      createHotspot(optionBox, () => {
+        state.selectedOptionIndex = idx;
+        render();
+      }, "hotspot answer-hitbox"),
+    );
   });
 
-  document.getElementById("answerBtn").addEventListener("click", () => {
+  if (state.selectedOptionIndex !== null) {
+    wrap.appendChild(createSelectedOverlay(question.options[state.selectedOptionIndex]));
+  }
+
+  const answerButton = createHotspot(buttonHitboxes.answer, () => {
+    if (state.selectedOptionIndex === null) return;
     const isCorrect = state.selectedOptionIndex === question.correctIndex;
     state.lastWasCorrect = isCorrect;
     if (isCorrect) state.score += 1;
     state.answers.push({
-      questionId: question.id,
+      question: state.questionIndex + 1,
       selected: state.selectedOptionIndex + 1,
       correct: question.correctIndex + 1,
       isCorrect,
@@ -219,79 +168,86 @@ function renderQuestion() {
     state.screen = "result";
     render();
   });
+
+  answerButton.disabled = state.selectedOptionIndex === null;
+  wrap.appendChild(answerButton);
+
+  if (state.selectedOptionIndex === null) {
+    const disabledShade = document.createElement("div");
+    disabledShade.className = "button-disabled-shade";
+    disabledShade.style.left = `${buttonHitboxes.answer.x}px`;
+    disabledShade.style.top = `${buttonHitboxes.answer.y}px`;
+    disabledShade.style.width = `${buttonHitboxes.answer.w}px`;
+    disabledShade.style.height = `${buttonHitboxes.answer.h}px`;
+    disabledShade.textContent = "Ответ";
+    wrap.appendChild(disabledShade);
+  }
+
+  screenNode.appendChild(wrap);
 }
 
 function renderResult() {
-  const question = questions[state.questionIndex];
-  const title = state.lastWasCorrect ? "Верно" : "Не совсем правильно";
-  const titleClass = state.lastWasCorrect ? "status-title" : "status-title error";
-  const nextLabel =
-    state.questionIndex === TOTAL_QUESTIONS - 1 ? "Смотреть результат" : "Следующее задание";
+  const wrap = document.createElement("div");
+  wrap.className = "screen-wrap";
+  const source = state.lastWasCorrect ? frames.success : frames.lost;
+  wrap.appendChild(createFrameLayer(source[state.questionIndex]));
 
-  screenNode.innerHTML = `
-    <div class="topbar">${question.progress}</div>
-    <h2 class="${titleClass}">${title}</h2>
-    <p class="explanation">${question.explanation}</p>
-    <div class="hero">Иллюстрация и Фигма-бой из макета</div>
-    <div class="spacer"></div>
-    <button class="btn btn-primary" id="nextBtn">${nextLabel}</button>
-  `;
-
-  document.getElementById("nextBtn").addEventListener("click", () => {
-    if (state.questionIndex === TOTAL_QUESTIONS - 1) {
-      state.screen = "final";
+  wrap.appendChild(
+    createHotspot(buttonHitboxes.next, () => {
+      if (state.questionIndex === TOTAL_QUESTIONS - 1) {
+        state.screen = "final";
+        render();
+        return;
+      }
+      state.questionIndex += 1;
+      state.selectedOptionIndex = null;
+      state.screen = "question";
       render();
-      return;
-    }
-    state.questionIndex += 1;
-    state.selectedOptionIndex = null;
-    state.screen = "question";
-    render();
-  });
-}
+    }),
+  );
 
-function shareToTelegram(score) {
-  const message = `Привет, Илья. Я прошёл тест и заработал в нём ${score} баллов.`;
-  const encodedMessage = encodeURIComponent(message);
-  const encodedUrl = encodeURIComponent("https://t.me/ilya_uxui_design");
-  return `https://t.me/share/url?url=${encodedUrl}&text=${encodedMessage}`;
+  screenNode.appendChild(wrap);
 }
 
 function renderFinal() {
-  screenNode.innerHTML = `
-    <div class="topbar">Завершение теста</div>
-    <p class="score">${state.score} баллов</p>
-    <p class="score-caption">Эти баллы вы можете использовать на получение скидки на ваши курсы и консультации.</p>
-    <div class="hero">Финальный экран с Фигма-боем</div>
-    <div class="spacer"></div>
-    <button class="btn btn-primary" id="benefitBtn">Получить выгоду</button>
-    <button class="btn btn-secondary" id="shareBtn">Отправить результат Илье</button>
-  `;
+  const wrap = document.createElement("div");
+  wrap.className = "screen-wrap";
+  wrap.appendChild(createFrameLayer(frames.final));
 
-  document.getElementById("benefitBtn").addEventListener("click", () => {
-    const tg = getTelegramApp();
-    const payload = {
-      type: "quiz_result",
-      score: state.score,
-      total: TOTAL_QUESTIONS,
-      answers: state.answers,
-      sentAt: new Date().toISOString(),
-    };
+  // Hide hardcoded "7 баллов" text from screenshot and overlay dynamic score.
+  const scoreMask = document.createElement("div");
+  scoreMask.className = "score-mask";
+  wrap.appendChild(scoreMask);
 
-    if (tg && tg.sendData) {
-      tg.sendData(JSON.stringify(payload));
-      tg.close();
-      return;
-    }
+  const scoreText = document.createElement("p");
+  scoreText.className = "score-overlay";
+  scoreText.textContent = `${state.score} баллов`;
+  wrap.appendChild(scoreText);
 
-    window.alert(
-      `Сейчас бот не подключён. Результат: ${state.score}/${TOTAL_QUESTIONS}. Подключите mini-app к Telegram-боту, и данные будут уходить автоматически.`,
-    );
-  });
+  wrap.appendChild(
+    createHotspot(buttonHitboxes.finalBenefit, () => {
+      const tg = getTelegramApp();
+      const payload = {
+        type: "quiz_result",
+        score: state.score,
+        total: TOTAL_QUESTIONS,
+        answers: state.answers,
+        sentAt: new Date().toISOString(),
+      };
 
-  document.getElementById("shareBtn").addEventListener("click", () => {
-    window.open(shareToTelegram(state.score), "_blank", "noopener,noreferrer");
-  });
+      if (tg && tg.sendData) {
+        tg.sendData(JSON.stringify(payload));
+        tg.close();
+        return;
+      }
+
+      window.alert(
+        `Telegram WebApp API недоступен. Результат: ${state.score}/${TOTAL_QUESTIONS}. Запустите приложение из бота, чтобы отправка сработала.`,
+      );
+    }),
+  );
+
+  screenNode.appendChild(wrap);
 }
 
 initTelegram();
