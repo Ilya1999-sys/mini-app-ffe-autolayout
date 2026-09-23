@@ -1,9 +1,11 @@
 :root {
-  --bg: #f6f8fc;
-  --screen-bg: #ffffff;
-  --ink: #17171b;
-  --muted: #666f80;
-  --line: #dbe1e9;
+  --bg: #17171b;
+  --screen-bg: #17171b;
+  --ink: #e2d9e2;
+  --muted: #e2d9e2;
+  --card-bg: #2b2b2f;
+  --card-line: #535357;
+  --demo-text: #8e8e96;
   --accent: #c9f938;
 }
 
@@ -29,7 +31,7 @@ body {
   width: 390px;
   height: 844px;
   border-radius: 28px;
-  border: 1px solid var(--line);
+  border: 0;
   background: var(--screen-bg);
   overflow: hidden;
 }
@@ -54,7 +56,7 @@ body {
   font-size: 16px;
   line-height: 20px;
   font-weight: 600;
-  color: #313a4c;
+  color: var(--ink);
 }
 
 .character {
@@ -96,7 +98,7 @@ body {
   margin: 0;
   font-size: 18px;
   line-height: 22px;
-  color: #424d63;
+  color: var(--muted);
 }
 
 .question-block {
@@ -110,6 +112,7 @@ body {
   font-size: 20px;
   line-height: 24px;
   font-weight: 600;
+  color: var(--ink);
 }
 
 .answers {
@@ -120,8 +123,8 @@ body {
 
 .quiz-card {
   width: 100%;
-  border: 1px solid var(--line);
-  background: #fff;
+  border: 1px solid var(--card-line);
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 16px;
   text-align: left;
@@ -152,7 +155,7 @@ body {
 .mid-title {
   margin: 0;
   font-weight: 600;
-  color: #1d232f;
+  color: var(--demo-text);
 }
 
 .big-title {
@@ -184,7 +187,7 @@ body {
   width: 100%;
   font-size: 22px;
   line-height: 22px;
-  color: #344057;
+  color: var(--demo-text);
 }
 
 .desc.tight {
@@ -195,8 +198,8 @@ body {
 .pill {
   width: 100%;
   border-radius: 999px;
-  border: 1px solid #e0e4eb;
-  background: #f9fbff;
+  border: 1px solid var(--demo-text);
+  background: transparent;
   height: 50px;
   display: flex;
   align-items: center;
@@ -207,13 +210,14 @@ body {
   font-size: 24px;
   line-height: 24px;
   font-weight: 500;
+  color: var(--demo-text);
 }
 
 .arrow {
   display: block;
   width: 2px;
   height: 40px;
-  background: #1f2738;
+  background: var(--accent);
   position: relative;
 }
 
@@ -224,8 +228,8 @@ body {
   bottom: 0;
   width: 12px;
   height: 12px;
-  border-right: 2px solid #1f2738;
-  border-bottom: 2px solid #1f2738;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
   transform: rotate(45deg);
 }
 
@@ -241,6 +245,7 @@ body {
   font-size: 40px;
   line-height: 40px;
   font-weight: 600;
+  color: var(--demo-text);
 }
 
 .product {
@@ -253,7 +258,7 @@ body {
   width: 100%;
   height: 120px;
   border-radius: 12px;
-  background: #d6dde8;
+  background: #46464b;
 }
 
 .product-row {
@@ -267,7 +272,7 @@ body {
   width: 70px;
   height: 72px;
   border-radius: 10px;
-  background: #d6dde8;
+  background: #46464b;
 }
 
 .tags {
@@ -289,10 +294,10 @@ body {
   justify-content: center;
   min-height: 34px;
   border-radius: 10px;
-  border: 1px solid #d7dce6;
+  border: 1px solid #8e8e96;
   font-size: 24px;
   line-height: 24px;
-  color: #232b3b;
+  color: #8e8e96;
 }
 
 .tag.small {
@@ -342,7 +347,7 @@ body {
   margin: 0;
   font-size: 18px;
   line-height: 22px;
-  color: #323d54;
+  color: var(--ink);
 }
 
 .result-copy.final-copy p {
@@ -371,8 +376,8 @@ body {
 }
 
 .cta.disabled {
-  background: #e5e7eb;
-  color: #9aa0ac;
+  background: #568100;
+  color: #111827;
 }
 
 @media (max-width: 420px) {
