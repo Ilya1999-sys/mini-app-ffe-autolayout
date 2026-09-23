@@ -1,10 +1,8 @@
 const OFFER_OPTIONS = [
-  "Курс Figma для UX-редакторов",
-  "Базовый курс Figma для редакторов",
-  "Курс Figma для презентаций",
-  "Разовая консультация",
-  "Пакет из 3 консультаций",
-  "Пакет из 5 консультаций",
+  "Курс по Фигме для UX-редакторов",
+  "Базовый курс по Фигме",
+  "Курс для презентаций",
+  "Консультации",
 ];
 
 const BOT_USERNAME = "FigmaForEditors_bot";
@@ -106,10 +104,12 @@ function renderOptionVisual(questionIdx, optionIdx) {
       return `
         <div class="demo-col">
           <p class="big-title center">Заголовок</p>
-          <p class="desc">Описание</p>
-          ${arrow()}
-          <p class="desc">в несколько строк</p>
-          <p class="desc">Ещё одно описание в несколько строк</p>
+          <div class="description-stack">
+            <p class="desc">Описание</p>
+            ${arrow()}
+            <p class="desc">в&nbsp;несколько строк</p>
+            <p class="desc">Ещё одно описание<br>в&nbsp;несколько строк</p>
+          </div>
         </div>
       `;
     case "2-2":
@@ -117,22 +117,22 @@ function renderOptionVisual(questionIdx, optionIdx) {
         <div class="demo-col">
           <p class="big-title center">Заголовок</p>
           ${arrow()}
-          <p class="desc">Описание в несколько строк</p>
-          <p class="desc">Ещё одно описание в несколько строк</p>
+          <p class="desc">Описание<br>в&nbsp;несколько строк</p>
+          <p class="desc">Ещё одно описание<br>в&nbsp;несколько строк</p>
         </div>
       `;
     case "3-1":
       return `
         <div class="demo-col">
           <p class="big-title center">Заголовок</p>
-          <p class="desc">Описание в несколько строк, а может быть и ещё больше</p>
+          <p class="desc">Описание<br>в&nbsp;несколько строк,<br>а&nbsp;может быть<br>и&nbsp;ещё больше</p>
         </div>
       `;
     case "3-2":
       return `
         <div class="demo-row">
           <p class="mid-title">Заголовок</p>
-          <p class="desc tight">Описание в несколько строк, а может быть и ещё больше</p>
+          <p class="desc tight">Описание<br>в&nbsp;несколько строк,<br>а&nbsp;может быть<br>и&nbsp;ещё больше</p>
         </div>
       `;
     case "4-1":
@@ -205,8 +205,8 @@ function renderWelcome() {
       ${makeTopBar("Figma boy Trainer")}
       <img class="character welcome" src="./assets/characters/welcome@2x.png" alt="Figma boy" />
       <div class="welcome-copy">
-        <h1>Figa хочет, чтобы вы изучили автолейаут быстро и легко</h1>
-        <p>7 коротких задач по Auto Layout. За правильные ответы — промокод на скидку.</p>
+        <h1>Figa хочет, чтобы вы&nbsp;изучили автолейаут быстро и&nbsp;легко</h1>
+        <p>7 коротких задач по&nbsp;Auto Layout. За&nbsp;правильные ответы&nbsp;— промокод на&nbsp;скидку.</p>
       </div>
       <button class="cta enabled" id="startBtn">Начать игру</button>
     </div>
@@ -224,7 +224,7 @@ function renderQuestion() {
       ${makeTopBar(`Задание ${state.questionIndex + 1}/7`)}
       <div class="question-block">
         <h2>${q.text}</h2>
-        <div class="answers">
+        <div class="answers" data-question="${state.questionIndex + 1}">
           <button class="quiz-card ${state.selectedOptionIndex === 0 ? "selected" : ""}" data-opt="0">${renderOptionVisual(
             state.questionIndex,
             0,
@@ -237,7 +237,7 @@ function renderQuestion() {
       </div>
       <button class="cta ${state.selectedOptionIndex === null ? "disabled" : "enabled"}" id="answerBtn" ${
         state.selectedOptionIndex === null ? "disabled" : ""
-      }>Ответ</button>
+      }>Проверить ответ</button>
     </div>
   `;
 
@@ -299,7 +299,7 @@ function renderFinal() {
     <div class="layout result-layout">
       ${makeTopBar("Завершение теста")}
       <div class="result-copy final-copy">
-        <h2 class="score-text">${state.score} баллов</h2>
+        <h2 class="score-text">${state.score} ${state.score === 1 ? "балл" : state.score >= 2 && state.score <= 4 ? "балла" : "баллов"}</h2>
         <p>Эти баллы вы можете использовать на получение скидки на наши курсы и консультации</p>
       </div>
       <img class="character final" src="./assets/characters/final@2x.png" alt="Figma boy finish" />
@@ -318,13 +318,18 @@ function renderFinal() {
     };
 
     const tg = getTg();
-    if (tg && tg.sendData) {
+    const launchedFromKeyboard = new URLSearchParams(window.location.search).get("launch") === "keyboard";
+    if (launchedFromKeyboard && tg && tg.sendData) {
       tg.sendData(JSON.stringify(payload));
-      tg.close();
       return;
     }
 
-    window.location.href = `https://t.me/${BOT_USERNAME}?start=quiz_${state.score}`;
+    const botUrl = `https://t.me/${BOT_USERNAME}?start=quiz_${state.score}`;
+    if (tg && tg.openTelegramLink) {
+      tg.openTelegramLink(botUrl);
+      return;
+    }
+    window.location.href = botUrl;
   };
 }
 
