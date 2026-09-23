@@ -11,7 +11,7 @@ Telegram Mini App с тестом из семи вопросов по Auto Layou
 ## Подключение к @FigmaForEditors_bot
 
 1. В проекте Vercel `mini-app-ffe-autolayout` добавьте переменную окружения `TELEGRAM_BOT_TOKEN` для **Production**. Значение — токен бота из `@BotFather`. Не сохраняйте его в Git и не отправляйте в переписке. После добавления переменной запустите Redeploy последнего production-деплоя или отправьте новый коммит.
-2. Проверьте, не занят ли вебхук другим приложением: локально выполните `TELEGRAM_BOT_TOKEN='...' node scripts/setup-webhook.js`. Команда покажет адрес текущего вебхука и проверит, что токен принадлежит `@FigmaForEditors_bot`. Токен вводится только в локальном терминале. Если вебхука нет, установите его командой `TELEGRAM_BOT_TOKEN='...' node scripts/setup-webhook.js --install`. Скрипт не заменит другой действующий вебхук автоматически.
+2. Задайте `TELEGRAM_BOT_TOKEN` в локальном терминале, не записывая его в файл или историю команд (например, в `zsh`: `read -rs "TELEGRAM_BOT_TOKEN?Токен: "; echo; export TELEGRAM_BOT_TOKEN`). Запустите `node scripts/setup-webhook.js`: команда покажет адрес текущего вебхука и проверит, что токен принадлежит `@FigmaForEditors_bot`. Если вебхука нет, установите его через `node scripts/setup-webhook.js --install`. Скрипт не заменит другой действующий вебхук автоматически. После настройки выполните `unset TELEGRAM_BOT_TOKEN`.
 3. В `@BotFather` → `/mybots` → `@FigmaForEditors_bot` → **Bot Settings** → **Menu Button** укажите URL `https://mini-app-ffe-autolayout.vercel.app/` и короткое название кнопки, например «Пройти тест».
 4. Откройте `@FigmaForEditors_bot`, нажмите `/start`, пройдите тест через кнопку или меню и выберите один из четырёх продуктов. Бот должен ответить кодом и кнопкой ссылки на продукт.
 
