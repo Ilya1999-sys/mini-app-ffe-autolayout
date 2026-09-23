@@ -307,7 +307,8 @@ function renderFinal() {
     </div>
   `;
 
-  document.getElementById("benefitBtn").onclick = () => {
+  document.getElementById("benefitBtn").onclick = async () => {
+    const button = document.getElementById("benefitBtn");
     const payload = {
       type: "quiz_completed",
       score: state.score,
@@ -324,12 +325,37 @@ function renderFinal() {
       return;
     }
 
-    const botUrl = `https://t.me/${BOT_USERNAME}?start=quiz_${state.score}`;
-    if (tg && tg.openTelegramLink) {
-      tg.openTelegramLink(botUrl);
+    if (tg?.initData) {
+      button.disabled = true;
+      button.textContent = "Отправляем результат…";
+      try {
+        const response = await fetch("/api/quiz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData: tg.initData, answers: state.answers }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Ошибка отправки результата");
+        tg.close();
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = "Попробовать ещё раз";
+        let status = document.getElementById("benefitStatus");
+        if (!status) {
+          status = document.createElement("p");
+          status.id = "benefitStatus";
+          status.className = "benefit-status";
+          status.setAttribute("role", "status");
+          button.before(status);
+        }
+        status.textContent = error.message;
+      }
       return;
     }
-    window.location.href = botUrl;
+
+    const botUrl = `https://t.me/${BOT_USERNAME}?start=quiz`;
+    if (tg?.openTelegramLink) tg.openTelegramLink(botUrl);
+    else window.location.href = botUrl;
   };
 }
 

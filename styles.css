@@ -486,6 +486,10 @@ body {
   gap: 12px;
 }
 
+.result-layout {
+  position: relative;
+}
+
 .result-copy h2 {
   margin: 0;
   font-size: 48px;
@@ -510,6 +514,18 @@ body {
 
 .score-text {
   white-space: nowrap;
+}
+
+.benefit-status {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 76px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
 }
 
 .cta {
