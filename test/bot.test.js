@@ -72,13 +72,14 @@ test("API теста отправляет кнопки в бот только п
     await handler({ method: "POST", body: { initData: initData(42, Math.floor(Date.now() / 1000)), answers } }, ok);
     assert.equal(ok.statusCode, 200);
     assert.equal(ok.body.score, 7);
-    assert.equal(calls.length, 1);
-    assert.equal(calls[0].body.reply_markup.inline_keyboard.length, 4);
+    assert.deepEqual(calls.map((call) => call.url.split("/").pop()), ["getWebhookInfo", "setWebhook", "sendMessage"]);
+    assert.equal(calls[1].body.url, "https://mini-app-ffe-autolayout.vercel.app/api/telegram");
+    assert.equal(calls[2].body.reply_markup.inline_keyboard.length, 4);
 
     const bad = response();
     await handler({ method: "POST", body: { initData: "forged", answers } }, bad);
     assert.equal(bad.statusCode, 400);
-    assert.equal(calls.length, 1);
+    assert.equal(calls.length, 3);
   } finally {
     global.fetch = originalFetch;
     delete process.env.TELEGRAM_BOT_TOKEN;
@@ -97,6 +98,23 @@ test("вебхук отклоняет запрос без Telegram secret token"
     assert.equal(ok.statusCode, 200);
   } finally {
     delete process.env.TELEGRAM_BOT_TOKEN;
+  }
+});
+
+test("автонастройка не заменяет вебхук другого приложения", async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (url) => {
+    calls.push(url.split("/").pop());
+    return { ok: true, json: async () => ({ ok: true, result: { url: "https://other-app.vercel.app/api/telegram" } }) };
+  };
+  try {
+    delete require.cache[require.resolve("../lib/telegram")];
+    const { ensureWebhook } = require("../lib/telegram");
+    await assert.rejects(ensureWebhook(TOKEN), /другой вебхук/);
+    assert.deepEqual(calls, ["getWebhookInfo"]);
+  } finally {
+    global.fetch = originalFetch;
   }
 });
 

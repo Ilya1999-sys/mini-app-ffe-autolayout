@@ -1,5 +1,5 @@
 const { scoreAnswers } = require("../lib/quiz");
-const { getBotToken, validateInitData, sendProductChoices } = require("../lib/telegram");
+const { getBotToken, validateInitData, ensureWebhook, sendProductChoices } = require("../lib/telegram");
 
 module.exports = async function handler(request, response) {
   response.setHeader("Cache-Control", "no-store");
@@ -22,6 +22,7 @@ module.exports = async function handler(request, response) {
   }
 
   try {
+    await ensureWebhook(token);
     await sendProductChoices(user.id, score, token);
     return response.status(200).json({ ok: true, score });
   } catch (error) {
