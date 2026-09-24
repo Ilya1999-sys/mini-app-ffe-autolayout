@@ -21,19 +21,24 @@ body {
 }
 
 .app {
+  position: relative;
   min-height: 100dvh;
-  display: grid;
-  place-items: center;
+  height: 100dvh;
   padding: 16px 12px;
+  overflow: hidden;
 }
 
 .screen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 390px;
   height: 844px;
   border-radius: 28px;
   border: 0;
   background: var(--screen-bg);
   overflow: hidden;
+  transform: translate(-50%, -50%) scale(var(--desktop-scale, 1));
 }
 
 .layout {
@@ -552,15 +557,18 @@ body {
 
 @media (max-width: 420px) {
   .app {
-    display: block;
+    height: auto;
     padding: 0;
+    overflow: visible;
   }
 
   .screen {
+    position: static;
     width: 100vw;
     height: 100dvh;
     border-radius: 0;
     overflow-y: auto;
+    transform: none;
   }
 
   .layout {

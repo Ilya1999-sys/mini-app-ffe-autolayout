@@ -64,6 +64,17 @@ const state = {
 
 const root = document.getElementById("screen");
 
+function fitDesktopScreen() {
+  if (window.innerWidth <= 420) return;
+  const availableHeight = window.innerHeight - 32;
+  const availableWidth = window.innerWidth - 24;
+  const scale = Math.min(1, availableHeight / 844, availableWidth / 390);
+  document.documentElement.style.setProperty("--desktop-scale", String(Math.max(0, scale)));
+}
+
+window.addEventListener("resize", fitDesktopScreen);
+fitDesktopScreen();
+
 const getTg = () => (window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null);
 
 function initTelegram() {
