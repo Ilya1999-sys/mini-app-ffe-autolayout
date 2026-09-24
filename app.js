@@ -63,10 +63,16 @@ const state = {
 };
 
 const root = document.getElementById("screen");
+const getTg = () => (window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null);
 
 function fitDesktopScreen() {
-  if (window.innerWidth <= 420) return;
-  const availableHeight = window.innerHeight - 32;
+  const platform = getTg()?.platform;
+  const isDesktopTelegram = ["macos", "tdesktop", "windows", "linux"].includes(platform);
+  const hasDesktopPointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const shouldFit = window.innerWidth > 420 || isDesktopTelegram || hasDesktopPointer;
+  document.documentElement.classList.toggle("fit-screen", shouldFit);
+  if (!shouldFit) return;
+  const availableHeight = (window.visualViewport?.height || window.innerHeight) - 32;
   const availableWidth = window.innerWidth - 24;
   const scale = Math.min(1, availableHeight / 844, availableWidth / 390);
   document.documentElement.style.setProperty("--desktop-scale", String(Math.max(0, scale)));
@@ -75,13 +81,13 @@ function fitDesktopScreen() {
 window.addEventListener("resize", fitDesktopScreen);
 fitDesktopScreen();
 
-const getTg = () => (window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null);
-
 function initTelegram() {
   const tg = getTg();
   if (!tg) return;
   tg.ready();
   tg.expand();
+  tg.onEvent?.("viewportChanged", fitDesktopScreen);
+  fitDesktopScreen();
 }
 
 function makeTopBar(label) {
