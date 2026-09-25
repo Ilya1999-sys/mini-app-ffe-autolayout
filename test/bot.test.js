@@ -191,6 +191,7 @@ test("повторный тест блокируется для Telegram ID, а 
     const body = JSON.parse(options.body);
     if (url === "https://redis.test") {
       const [command, key, value] = body;
+      if (command === "PING") return { ok: true, json: async () => ({ result: "PONG" }) };
       if (command === "GET") return { ok: true, json: async () => ({ result: store.get(key) ?? null }) };
       if (command === "SET") {
         const result = store.has(key) ? null : "OK";
@@ -207,6 +208,9 @@ test("повторный тест блокируется для Telegram ID, а 
     const status = require("../api/status");
     const telegram = require("../api/telegram");
     const signed = initData(42, Math.floor(Date.now() / 1000));
+    const health = response();
+    await status({ method: "GET" }, health);
+    assert.deepEqual(health.body, { storageReady: true });
     const answers = [1, 2, 2, 1, 2, 2, 1].map((selected, index) => ({ question: index + 1, selected }));
     const before = response();
     await status({ method: "POST", body: { initData: signed } }, before);
