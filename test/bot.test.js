@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
-const { scoreAnswers } = require("../lib/quiz");
+const { scoreAnswers, discountForScore } = require("../lib/quiz");
 const { parsePromoTable } = require("../lib/promos");
 const { validateInitData, choiceData, parseChoiceData, webhookSecret } = require("../lib/telegram");
 
@@ -32,6 +32,11 @@ test("сервер сам считает баллы и отклоняет неп
   assert.equal(scoreAnswers(correct), 7);
   assert.throws(() => scoreAnswers(correct.slice(1).concat(correct[1])), /Некорректный набор/);
   assert.throws(() => scoreAnswers(correct.slice(1)), /семь вопросов/);
+});
+
+test("скидка соответствует каждому результату от 0 до 7 баллов", () => {
+  assert.deepEqual(Array.from({ length: 8 }, (_, score) => discountForScore(score)), [3, 5, 7, 10, 12, 15, 18, 20]);
+  assert.throws(() => discountForScore(8), /Некорректное количество баллов/);
 });
 
 test("подпись Mini App привязана к пользователю и сроку действия", () => {
@@ -224,7 +229,7 @@ test("повторный тест блокируется для Telegram ID, а 
       body: { message: { chat: { id: 42, type: "private" }, from: { id: 42 }, text: "/start" } } }, start);
     assert.equal(start.statusCode, 200);
     const lastMessage = calls.filter((call) => call.method === "sendMessage").at(-1).body;
-    assert.equal(lastMessage.text, "Результат теста: 7 из 7. Выбирайте продукт, на который хотите получить промокод на скидку");
+    assert.equal(lastMessage.text, "Результат теста: 7 из 7. Вам доступна скидка 20%. Выбирайте продукт, на который хотите получить промокод на скидку.");
     assert.equal(lastMessage.reply_markup.inline_keyboard.length, 4);
   } finally {
     global.fetch = originalFetch;
