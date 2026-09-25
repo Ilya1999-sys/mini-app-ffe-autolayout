@@ -68,8 +68,7 @@ const getTg = () => (window.Telegram && window.Telegram.WebApp ? window.Telegram
 function fitDesktopScreen() {
   const platform = getTg()?.platform;
   const isDesktopTelegram = ["macos", "tdesktop", "windows", "linux"].includes(platform);
-  const hasDesktopPointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-  const shouldFit = window.innerWidth > 420 || isDesktopTelegram || hasDesktopPointer;
+  const shouldFit = window.innerWidth > 420 || isDesktopTelegram;
   document.documentElement.classList.toggle("fit-screen", shouldFit);
   if (!shouldFit) return;
   const availableHeight = (window.visualViewport?.height || window.innerHeight) - 32;
@@ -92,6 +91,17 @@ function initTelegram() {
 
 function makeTopBar(label) {
   return `<div class="topbar"><span>${label}</span></div>`;
+}
+
+function preventOrphanedWords(container) {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    node.textContent = node.textContent.replace(
+      /(^|[\s(])((?:[вксуоиая]|на|но|по|за|из|от|об|до|не|во|со|ко|без|для|при|под|над|про))\s+(?=\S)/giu,
+      (_, before, word) => `${before}${word}\u00a0`,
+    );
+  }
 }
 
 function arrow() {
@@ -304,7 +314,7 @@ function renderQuestion() {
   root.querySelectorAll("[data-opt]").forEach((btn) => {
     btn.onclick = () => {
       state.selectedOptionIndex = Number(btn.dataset.opt);
-      renderQuestion();
+      render();
     };
   });
 
@@ -420,11 +430,12 @@ function renderFinal() {
 }
 
 function render() {
-  if (["checking", "completed", "status-error"].includes(state.screen)) return renderAttemptStatus();
-  if (state.screen === "welcome") return renderWelcome();
-  if (state.screen === "question") return renderQuestion();
-  if (state.screen === "result") return renderResult();
-  return renderFinal();
+  if (["checking", "completed", "status-error"].includes(state.screen)) renderAttemptStatus();
+  else if (state.screen === "welcome") renderWelcome();
+  else if (state.screen === "question") renderQuestion();
+  else if (state.screen === "result") renderResult();
+  else renderFinal();
+  preventOrphanedWords(root);
 }
 
 initTelegram();
