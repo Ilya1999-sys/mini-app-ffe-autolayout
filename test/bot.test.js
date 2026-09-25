@@ -151,3 +151,85 @@ test("кнопка продукта получает нужный код из т
     delete process.env.TELEGRAM_BOT_TOKEN;
   }
 });
+
+test("стартовое сообщение содержит текст и кнопку «Начать тест»", async () => {
+  process.env.TELEGRAM_BOT_TOKEN = TOKEN;
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (url, options) => {
+    calls.push({ method: url.split("/").pop(), body: JSON.parse(options.body) });
+    return { ok: true, json: async () => ({ ok: true, result: true }) };
+  };
+  try {
+    const handler = require("../api/telegram");
+    const result = response();
+    await handler({ method: "POST", headers: { "x-telegram-bot-api-secret-token": webhookSecret(TOKEN) },
+      body: { message: { chat: { id: 42, type: "private" }, from: { id: 42 }, text: "/start" } } }, result);
+    assert.equal(result.statusCode, 200);
+    assert.match(calls[0].body.text, /Привет, это проект «Фигма для редакторов»!/);
+    assert.match(calls[0].body.text, /не путать с Figma 😁/);
+    assert.equal(calls[0].body.reply_markup.inline_keyboard[0][0].text, "Начать тест");
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+  }
+});
+
+test("повторный тест блокируется для Telegram ID, а /start показывает сохранённый результат", async () => {
+  process.env.TELEGRAM_BOT_TOKEN = TOKEN;
+  process.env.UPSTASH_REDIS_REST_URL = "https://redis.test";
+  process.env.UPSTASH_REDIS_REST_TOKEN = "test-redis-token";
+  const originalFetch = global.fetch;
+  const calls = [];
+  const store = new Map();
+  global.fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    if (url === "https://redis.test") {
+      const [command, key, value] = body;
+      if (command === "GET") return { ok: true, json: async () => ({ result: store.get(key) ?? null }) };
+      if (command === "SET") {
+        const result = store.has(key) ? null : "OK";
+        if (result) store.set(key, value);
+        return { ok: true, json: async () => ({ result }) };
+      }
+    }
+    calls.push({ method: url.split("/").pop(), body });
+    const result = url.endsWith("getWebhookInfo") ? { url: "https://mini-app-ffe-autolayout.vercel.app/api/telegram" } : true;
+    return { ok: true, json: async () => ({ ok: true, result }) };
+  };
+  try {
+    const quiz = require("../api/quiz");
+    const status = require("../api/status");
+    const telegram = require("../api/telegram");
+    const signed = initData(42, Math.floor(Date.now() / 1000));
+    const answers = [1, 2, 2, 1, 2, 2, 1].map((selected, index) => ({ question: index + 1, selected }));
+    const before = response();
+    await status({ method: "POST", body: { initData: signed } }, before);
+    assert.deepEqual(before.body, { enforced: true, completed: false, score: null });
+
+    const first = response();
+    await quiz({ method: "POST", body: { initData: signed, answers } }, first);
+    assert.equal(first.statusCode, 200);
+    const second = response();
+    await quiz({ method: "POST", body: { initData: signed, answers } }, second);
+    assert.equal(second.statusCode, 409);
+    assert.equal(calls.filter((call) => call.method === "sendMessage").length, 1);
+
+    const after = response();
+    await status({ method: "POST", body: { initData: signed } }, after);
+    assert.deepEqual(after.body, { enforced: true, completed: true, score: 7 });
+
+    const start = response();
+    await telegram({ method: "POST", headers: { "x-telegram-bot-api-secret-token": webhookSecret(TOKEN) },
+      body: { message: { chat: { id: 42, type: "private" }, from: { id: 42 }, text: "/start" } } }, start);
+    assert.equal(start.statusCode, 200);
+    const lastMessage = calls.filter((call) => call.method === "sendMessage").at(-1).body;
+    assert.equal(lastMessage.text, "Результат теста: 7 из 7. Выбирайте продукт, на который хотите получить промокод на скидку");
+    assert.equal(lastMessage.reply_markup.inline_keyboard.length, 4);
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  }
+});

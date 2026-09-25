@@ -1,5 +1,6 @@
 const { scoreAnswers } = require("../lib/quiz");
 const { getPromoCode } = require("../lib/promos");
+const { getCompletedScore, claimCompletion } = require("../lib/attempts");
 const {
   APP_URL, getBotToken, secureEquals, webhookSecret, parseChoiceData,
   telegramApi, sendProductChoices,
@@ -9,24 +10,47 @@ async function handleMessage(message, token) {
   if (message.chat?.type !== "private" || !Number.isSafeInteger(message.from?.id)) return;
 
   if (message.web_app_data?.data) {
+    let score;
     try {
       const payload = JSON.parse(message.web_app_data.data);
-      const score = scoreAnswers(payload.answers);
-      await sendProductChoices(message.from.id, score, token);
+      score = scoreAnswers(payload.answers);
     } catch {
       await telegramApi("sendMessage", {
         chat_id: message.chat.id,
         text: "Не удалось прочитать результат. Откройте тест ещё раз.",
+      }, token);
+      return;
+    }
+    try {
+      const completion = await claimCompletion(message.from.id, score);
+      if (!completion.claimed) {
+        await telegramApi("sendMessage", {
+          chat_id: message.chat.id,
+          text: "Вы уже прошли тест. Отправьте /start, чтобы снова увидеть свой результат и выбрать продукт.",
+        }, token);
+        return;
+      }
+      await sendProductChoices(message.from.id, score, token);
+    } catch (error) {
+      console.error("Не удалось сохранить результат:", error.message);
+      await telegramApi("sendMessage", {
+        chat_id: message.chat.id,
+        text: "Не удалось сохранить результат. Попробуйте позже.",
       }, token);
     }
     return;
   }
 
   if (typeof message.text === "string" && message.text.startsWith("/start")) {
+    const completedScore = await getCompletedScore(message.from.id);
+    if (completedScore !== null) {
+      await sendProductChoices(message.from.id, completedScore, token);
+      return;
+    }
     await telegramApi("sendMessage", {
       chat_id: message.chat.id,
-      text: "Пройдите тест по Auto Layout, чтобы получить промокод.",
-      reply_markup: { inline_keyboard: [[{ text: "Открыть тест", web_app: { url: APP_URL } }]] },
+      text: "Привет, это проект «Фигма для редакторов»!\nСегодня мы хотим, чтобы вы проверили свои знания автолейаута и получили скидки на наши продукты.\n\nЕсли готовы, то жмите кнопку «Начать тест» и знакомьтесь с Figa (не путать с Figma 😁)",
+      reply_markup: { inline_keyboard: [[{ text: "Начать тест", web_app: { url: APP_URL } }]] },
     }, token);
   }
 }

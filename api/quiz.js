@@ -1,5 +1,6 @@
 const { scoreAnswers } = require("../lib/quiz");
 const { getBotToken, validateInitData, ensureWebhook, sendProductChoices } = require("../lib/telegram");
+const { claimCompletion } = require("../lib/attempts");
 
 module.exports = async function handler(request, response) {
   response.setHeader("Cache-Control", "no-store");
@@ -23,6 +24,10 @@ module.exports = async function handler(request, response) {
 
   try {
     await ensureWebhook(token);
+    const completion = await claimCompletion(user.id, score);
+    if (!completion.claimed) {
+      return response.status(409).json({ error: "Вы уже прошли тест. Откройте бот и отправьте /start, чтобы снова увидеть свой результат." });
+    }
     await sendProductChoices(user.id, score, token);
     return response.status(200).json({ ok: true, score });
   } catch (error) {

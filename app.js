@@ -234,6 +234,49 @@ function renderWelcome() {
   };
 }
 
+function renderAttemptStatus() {
+  const completed = state.screen === "completed";
+  const failed = state.screen === "status-error";
+  root.innerHTML = `
+    <div class="layout result-layout">
+      ${makeTopBar("Figma boy Trainer")}
+      <div class="result-copy">
+        <h2>${completed ? "Вы уже прошли тест" : failed ? "Не удалось проверить тест" : "Проверяем прохождение…"}</h2>
+        <p>${completed ? `Ваш результат: ${state.score} из 7. Выберите продукт в сообщении бота.` : failed ? "Проверьте соединение и попробуйте ещё раз." : "Это займёт несколько секунд."}</p>
+      </div>
+      <img class="character ${completed ? "final" : "welcome"}" src="./assets/characters/${completed ? "final" : "welcome"}@2x.png" alt="Figa" />
+      ${completed || failed ? `<button class="cta enabled" id="statusBtn">${completed ? "Вернуться в бот" : "Повторить проверку"}</button>` : ""}
+    </div>
+  `;
+  const button = document.getElementById("statusBtn");
+  if (button) button.onclick = completed ? () => getTg()?.close() : checkAttemptStatus;
+}
+
+async function checkAttemptStatus() {
+  const tg = getTg();
+  if (!tg?.initData) return;
+  state.screen = "checking";
+  render();
+  try {
+    const response = await fetch("/api/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData: tg.initData }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+    if (result.completed) {
+      state.score = result.score;
+      state.screen = "completed";
+    } else {
+      state.screen = "welcome";
+    }
+  } catch {
+    state.screen = "status-error";
+  }
+  render();
+}
+
 function renderQuestion() {
   const q = questions[state.questionIndex];
   root.innerHTML = `
@@ -377,6 +420,7 @@ function renderFinal() {
 }
 
 function render() {
+  if (["checking", "completed", "status-error"].includes(state.screen)) return renderAttemptStatus();
   if (state.screen === "welcome") return renderWelcome();
   if (state.screen === "question") return renderQuestion();
   if (state.screen === "result") return renderResult();
@@ -384,4 +428,5 @@ function render() {
 }
 
 initTelegram();
-render();
+if (getTg()?.initData) checkAttemptStatus();
+else render();
