@@ -1,4 +1,4 @@
-const { scoreAnswers } = require("../lib/quiz");
+const { scoreAnswers, discountForScore } = require("../lib/quiz");
 const { getPromoCode } = require("../lib/promos");
 const { getCompletedScore, claimCompletion } = require("../lib/attempts");
 const {
@@ -71,10 +71,17 @@ async function handleCallback(query, token) {
   await telegramApi("answerCallbackQuery", { callback_query_id: query.id }, token);
   try {
     const code = await getPromoCode(choice.score, choice.product.id);
+    const discount = discountForScore(choice.score);
+    const isConsultation = choice.product.id === "consult";
     await telegramApi("sendMessage", {
       chat_id: query.from.id,
-      text: `${choice.product.label}\nПромокод: ${code}`,
-      reply_markup: { inline_keyboard: [[{ text: "Открыть продукт", url: choice.product.url }]] },
+      text: isConsultation
+        ? `Ваш промокод ${code} на скидку ${discount}%. Пишите Илье в личку @ilya_uxui_design и договаривайтесь о времени консультации.`
+        : `Ваш промокод ${code} на скидку ${discount}%. Переходите в курс: ${choice.product.url} и применяйте.`,
+      reply_markup: { inline_keyboard: [[{
+        text: isConsultation ? "Написать Илье" : "Перейти в курс",
+        url: choice.product.url,
+      }]] },
     }, token);
   } catch (error) {
     console.error("Не удалось получить промокод:", error.message);

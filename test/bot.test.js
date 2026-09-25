@@ -123,7 +123,7 @@ test("автонастройка не заменяет вебхук другог
   }
 });
 
-test("кнопка продукта получает нужный код из таблицы и отправляет его пользователю", async () => {
+test("бот отправляет промокод, скидку и адрес выбранного продукта", async () => {
   process.env.TELEGRAM_BOT_TOKEN = TOKEN;
   const originalFetch = global.fetch;
   const calls = [];
@@ -138,19 +138,30 @@ test("кнопка продукта получает нужный код из т
   };
   try {
     const handler = require("../api/telegram");
-    const result = response();
-    await handler({
-      method: "POST",
-      headers: { "x-telegram-bot-api-secret-token": webhookSecret(TOKEN) },
-      body: { callback_query: {
-        id: "callback-1", from: { id: 42 },
-        data: choiceData(42, "slides", 7, TOKEN),
-      } },
-    }, result);
-    assert.equal(result.statusCode, 200);
-    assert.deepEqual(calls.map((call) => call.method), ["answerCallbackQuery", "sendMessage"]);
-    assert.match(calls[1].body.text, /SLIDES7/);
-    assert.equal(calls[1].body.chat_id, 42);
+    const cases = [
+      { product: "ux", score: 7, text: "Ваш промокод UX7 на скидку 20%. Переходите в курс: https://stepik.org/a/286605 и применяйте.", button: "Перейти в курс", url: "https://stepik.org/a/286605" },
+      { product: "basic", score: 4, text: "Ваш промокод BASIC4 на скидку 12%. Переходите в курс: https://stepik.org/a/212750 и применяйте.", button: "Перейти в курс", url: "https://stepik.org/a/212750" },
+      { product: "slides", score: 0, text: "Ваш промокод SLIDES0 на скидку 3%. Переходите в курс: https://stepik.org/a/233873 и применяйте.", button: "Перейти в курс", url: "https://stepik.org/a/233873" },
+      { product: "consult", score: 6, text: "Ваш промокод CONSULT6 на скидку 18%. Пишите Илье в личку @ilya_uxui_design и договаривайтесь о времени консультации.", button: "Написать Илье", url: "https://t.me/ilya_uxui_design" },
+    ];
+    for (const [index, item] of cases.entries()) {
+      const result = response();
+      await handler({
+        method: "POST",
+        headers: { "x-telegram-bot-api-secret-token": webhookSecret(TOKEN) },
+        body: { callback_query: {
+          id: `callback-${index}`, from: { id: 42 },
+          data: choiceData(42, item.product, item.score, TOKEN),
+        } },
+      }, result);
+      assert.equal(result.statusCode, 200);
+      const reply = calls[index * 2 + 1];
+      assert.equal(reply.method, "sendMessage");
+      assert.equal(reply.body.chat_id, 42);
+      assert.equal(reply.body.text, item.text);
+      assert.deepEqual(reply.body.reply_markup.inline_keyboard, [[{ text: item.button, url: item.url }]]);
+    }
+    assert.equal(calls.filter((call) => call.method === "answerCallbackQuery").length, cases.length);
   } finally {
     global.fetch = originalFetch;
     delete process.env.TELEGRAM_BOT_TOKEN;
