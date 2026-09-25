@@ -4,12 +4,13 @@ const { attemptLimitEnabled, checkAttemptStorage, getCompletedScore } = require(
 module.exports = async function handler(request, response) {
   response.setHeader("Cache-Control", "no-store");
   if (request.method === "GET") {
+    const configured = attemptLimitEnabled();
     try {
       const storageReady = await checkAttemptStorage();
-      return response.status(storageReady ? 200 : 503).json({ storageReady });
+      return response.status(storageReady ? 200 : 503).json({ configured, storageReady });
     } catch (error) {
       console.error("Не удалось проверить хранилище попыток:", error.message);
-      return response.status(503).json({ storageReady: false });
+      return response.status(503).json({ configured, storageReady: false });
     }
   }
   if (request.method !== "POST") return response.status(405).json({ error: "Метод не поддерживается" });

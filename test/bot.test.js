@@ -210,7 +210,7 @@ test("повторный тест блокируется для Telegram ID, а 
     const signed = initData(42, Math.floor(Date.now() / 1000));
     const health = response();
     await status({ method: "GET" }, health);
-    assert.deepEqual(health.body, { storageReady: true });
+    assert.deepEqual(health.body, { configured: true, storageReady: true });
     const answers = [1, 2, 2, 1, 2, 2, 1].map((selected, index) => ({ question: index + 1, selected }));
     const before = response();
     await status({ method: "POST", body: { initData: signed } }, before);
