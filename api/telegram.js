@@ -22,7 +22,7 @@ async function handleMessage(message, token) {
       return;
     }
     try {
-      const completion = await claimCompletion(message.from.id, score);
+      const completion = await claimCompletion(message.from, score);
       if (!completion.claimed) {
         await telegramApi("sendMessage", {
           chat_id: message.chat.id,
@@ -42,7 +42,7 @@ async function handleMessage(message, token) {
   }
 
   if (typeof message.text === "string" && message.text.startsWith("/start")) {
-    const completedScore = await getCompletedScore(message.from.id);
+    const completedScore = await getCompletedScore(message.from);
     if (completedScore !== null) {
       await sendProductChoices(message.from.id, completedScore, token);
       return;

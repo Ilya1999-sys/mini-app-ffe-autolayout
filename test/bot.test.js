@@ -8,8 +8,8 @@ const { validateInitData, choiceData, parseChoiceData, webhookSecret } = require
 const TOKEN = "123456:TEST_TOKEN";
 const NOW = 1_800_000_000;
 
-function initData(userId = 42, now = NOW) {
-  const params = new URLSearchParams({ auth_date: String(now), user: JSON.stringify({ id: userId, first_name: "Тест" }) });
+function initData(userId = 42, now = NOW, username) {
+  const params = new URLSearchParams({ auth_date: String(now), user: JSON.stringify({ id: userId, first_name: "Тест", username }) });
   const checkString = [...params.entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
     .map(([key, value]) => `${key}=${value}`).join("\n");
   const secret = crypto.createHmac("sha256", "WebAppData").update(TOKEN).digest();
@@ -246,6 +246,71 @@ test("повторный тест блокируется для Telegram ID, а 
     const lastMessage = calls.filter((call) => call.method === "sendMessage").at(-1).body;
     assert.equal(lastMessage.text, "Результат теста: 7 из 7. Вам доступна скидка 20%. Выбирайте продукт, на который хотите получить промокод на скидку.");
     assert.equal(lastMessage.reply_markup.inline_keyboard.length, 4);
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  }
+});
+
+test("тестирующие по Telegram username проходят повторно через Mini App и бот", async () => {
+  process.env.TELEGRAM_BOT_TOKEN = TOKEN;
+  process.env.UPSTASH_REDIS_REST_URL = "https://redis.test";
+  process.env.UPSTASH_REDIS_REST_TOKEN = "test-redis-token";
+  const originalFetch = global.fetch;
+  const calls = [];
+  const storedScore = new Map([["ffe:autolayout:completed:42", "4"]]);
+  global.fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    if (url === "https://redis.test") {
+      calls.push({ method: "redis", body });
+      const [command, key, value] = body;
+      if (command === "GET") return { ok: true, json: async () => ({ result: storedScore.get(key) ?? null }) };
+      if (command === "SET") {
+        const result = storedScore.has(key) ? null : "OK";
+        if (result) storedScore.set(key, value);
+        return { ok: true, json: async () => ({ result }) };
+      }
+    }
+    const method = url.split("/").pop();
+    calls.push({ method, body });
+    const result = method === "getWebhookInfo" ? { url: "https://mini-app-ffe-autolayout.vercel.app/api/telegram" } : true;
+    return { ok: true, json: async () => ({ ok: true, result }) };
+  };
+  try {
+    const quiz = require("../api/quiz");
+    const status = require("../api/status");
+    const telegram = require("../api/telegram");
+    const now = Math.floor(Date.now() / 1000);
+    const answers = [1, 2, 2, 1, 2, 2, 1].map((selected, index) => ({ question: index + 1, selected }));
+    for (const [id, username] of [[42, "ilya_uxui_design"], [43, "DM1017Y"], [44, "Olya25112"]]) {
+      const signed = initData(id, now, username);
+      const before = response();
+      await status({ method: "POST", body: { initData: signed } }, before);
+      assert.deepEqual(before.body, { enforced: false, completed: false, score: null });
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = response();
+        await quiz({ method: "POST", body: { initData: signed, answers } }, result);
+        assert.equal(result.statusCode, 200);
+        assert.equal(result.body.score, 7);
+      }
+
+      const start = response();
+      await telegram({ method: "POST", headers: { "x-telegram-bot-api-secret-token": webhookSecret(TOKEN) },
+        body: { message: { chat: { id, type: "private" }, from: { id, username }, text: "/start" } } }, start);
+      assert.equal(start.statusCode, 200);
+      assert.equal(calls.filter((call) => call.method === "sendMessage").at(-1).body.reply_markup.inline_keyboard[0][0].text, "Начать тест");
+    }
+
+    const keyboard = response();
+    await telegram({ method: "POST", headers: { "x-telegram-bot-api-secret-token": webhookSecret(TOKEN) },
+      body: { message: { chat: { id: 42, type: "private" }, from: { id: 42, username: "ilya_uxui_design" },
+        web_app_data: { data: JSON.stringify({ answers }) } } } }, keyboard);
+    assert.equal(keyboard.statusCode, 200);
+    assert.match(calls.filter((call) => call.method === "sendMessage").at(-1).body.text, /Результат теста: 7 из 7/);
+    assert.equal(calls.filter((call) => call.method === "redis").length, 0);
   } finally {
     global.fetch = originalFetch;
     delete process.env.TELEGRAM_BOT_TOKEN;

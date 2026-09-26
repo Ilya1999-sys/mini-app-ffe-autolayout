@@ -1,5 +1,5 @@
 const { getBotToken, validateInitData } = require("../lib/telegram");
-const { attemptLimitEnabled, checkAttemptStorage, getCompletedScore } = require("../lib/attempts");
+const { attemptLimitEnabled, attemptLimitApplies, checkAttemptStorage, getCompletedScore } = require("../lib/attempts");
 
 module.exports = async function handler(request, response) {
   response.setHeader("Cache-Control", "no-store");
@@ -22,8 +22,8 @@ module.exports = async function handler(request, response) {
     return response.status(400).json({ error: error.message });
   }
   try {
-    const score = await getCompletedScore(user.id);
-    return response.status(200).json({ enforced: attemptLimitEnabled(), completed: score !== null, score });
+    const score = await getCompletedScore(user);
+    return response.status(200).json({ enforced: attemptLimitApplies(user), completed: score !== null, score });
   } catch (error) {
     console.error("Не удалось проверить прохождение:", error.message);
     return response.status(503).json({ error: "Не удалось проверить прохождение. Попробуйте позже." });

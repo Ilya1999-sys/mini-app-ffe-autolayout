@@ -24,7 +24,7 @@ module.exports = async function handler(request, response) {
 
   try {
     await ensureWebhook(token);
-    const completion = await claimCompletion(user.id, score);
+    const completion = await claimCompletion(user, score);
     if (!completion.claimed) {
       return response.status(409).json({ error: "Вы уже прошли тест. Откройте бот и отправьте /start, чтобы снова увидеть свой результат." });
     }
