@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/channel-polls-cron",
+      "schedule": "25 7 * * 2"
+    }
+  ]
+}
