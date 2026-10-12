@@ -4,10 +4,6 @@
     {
       "path": "/api/channel-polls-cron",
       "schedule": "25 7 * * 2"
-    },
-    {
-      "path": "/api/channel-test-poll-cron",
-      "schedule": "25 7 * * 3"
     }
   ]
 }

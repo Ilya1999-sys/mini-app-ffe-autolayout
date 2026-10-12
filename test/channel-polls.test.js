@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { POLLS, TEST_POLL, pollForUtcDate } = require("../lib/channel-polls");
+const { POLLS, pollForUtcDate } = require("../lib/channel-polls");
 const handler = require("../api/channel-polls-cron");
 
 function responseStub() {
@@ -41,12 +41,12 @@ async function withRuntime(date, fetcher, action) {
   }
 }
 
-function cronRequest(authorization = "Bearer test-cron-secret", schedule = "25 7 * * 2") {
+function cronRequest(authorization = "Bearer test-cron-secret") {
   return {
     method: "GET",
     headers: {
       authorization,
-      "x-vercel-cron-schedule": schedule,
+      "x-vercel-cron-schedule": "25 7 * * 2",
     },
   };
 }
@@ -63,41 +63,6 @@ test("six polls have unique Tuesday dates and valid Telegram lengths", () => {
   assert.equal(pollForUtcDate("2026-10-14"), null);
   assert.equal(pollForUtcDate("2026-11-24"), null);
   assert.equal(pollForUtcDate("2026-12-01"), null);
-  assert.equal(TEST_POLL.date, "2026-10-14");
-  assert.equal(TEST_POLL.options.length, 4);
-});
-
-test("Wednesday test poll is published once without changing Tuesday polls", async () => {
-  let claimed = false;
-  const calls = [];
-  const fakeFetch = async (url, options) => {
-    const body = JSON.parse(options.body);
-    if (url === "https://redis.example.test") {
-      const result = body[0] === "SET" && body[3] === "NX"
-        ? (claimed ? null : "OK") : body[0] === "PING" ? "PONG" : "OK";
-      if (body[0] === "SET" && body[3] === "NX") claimed = true;
-      return { ok: true, json: async () => ({ result }) };
-    }
-    const method = url.split("/").at(-1);
-    calls.push({ method, body });
-    const result = method === "getMe" ? { id: 123, username: "FigmaForEditors_bot" }
-      : method === "getChatMember" ? { status: "administrator", can_post_messages: true }
-      : method === "sendPoll" ? { message_id: 789 } : null;
-    return { ok: true, json: async () => ({ ok: true, result }) };
-  };
-  await withRuntime("2026-10-14", fakeFetch, async () => {
-    const first = responseStub();
-    await handler(cronRequest("Bearer test-cron-secret", "25 7 * * 3"), first);
-    assert.deepEqual(first.body, { status: "sent", date: "2026-10-14", message_id: 789 });
-    assert.equal(calls.find((call) => call.method === "sendPoll").body.question, TEST_POLL.question);
-    const repeat = responseStub();
-    await handler(cronRequest("Bearer test-cron-secret", "25 7 * * 3"), repeat);
-    assert.deepEqual(repeat.body, { status: "already_claimed", date: "2026-10-14" });
-    assert.equal(calls.filter((call) => call.method === "sendPoll").length, 1);
-    const wrongSchedule = responseStub();
-    await handler(cronRequest(), wrongSchedule);
-    assert.deepEqual(wrongSchedule.body, { status: "ready_no_poll", date: "2026-10-14" });
-  });
 });
 
 test("cron rejects an unauthenticated request before network access", async () => {
