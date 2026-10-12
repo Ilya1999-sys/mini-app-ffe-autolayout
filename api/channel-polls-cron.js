@@ -1,8 +1,9 @@
 const { getBotToken, secureEquals, telegramApi } = require("../lib/telegram");
 const { attemptLimitEnabled, redisCommand } = require("../lib/attempts");
-const { BOT_USERNAME, CHANNEL_USERNAME, pollForUtcDate } = require("../lib/channel-polls");
+const { BOT_USERNAME, CHANNEL_USERNAME, TEST_POLL, pollForUtcDate } = require("../lib/channel-polls");
 
 const REQUIRED_SCHEDULE = "25 7 * * 2";
+const TEST_SCHEDULE = "25 7 * * 3";
 
 async function checkPostingRights(token) {
   const bot = await telegramApi("getMe", {}, token);
@@ -37,14 +38,19 @@ module.exports = async function handler(request, response) {
       return response.status(502).json({ error: "Бот или Redis не готовы к публикации" });
     }
   }
-  if (request.headers["x-vercel-cron-schedule"] !== REQUIRED_SCHEDULE) {
+  const schedule = request.headers["x-vercel-cron-schedule"];
+  if (schedule !== REQUIRED_SCHEDULE && schedule !== TEST_SCHEDULE) {
     return response.status(403).json({ error: "Неверное расписание" });
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const poll = pollForUtcDate(today);
+  const poll = schedule === TEST_SCHEDULE
+    ? (today === TEST_POLL.date ? TEST_POLL : null)
+    : pollForUtcDate(today);
   if (!poll) {
-    if (today > "2026-11-17") return response.status(200).json({ status: "no_poll", date: today });
+    if (schedule === TEST_SCHEDULE || today > "2026-11-17") {
+      return response.status(200).json({ status: "no_poll", date: today });
+    }
     if (!attemptLimitEnabled()) return response.status(503).json({ error: "Redis не подключён" });
     try {
       await checkPostingRights(getBotToken());
