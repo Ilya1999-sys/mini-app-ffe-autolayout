@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/channel-polls-cron",
-      "schedule": "25 7 * * 2"
+      "schedule": "0 7 * * 2"
     }
   ]
 }

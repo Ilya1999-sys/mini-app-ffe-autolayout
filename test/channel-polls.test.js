@@ -19,8 +19,8 @@ async function withRuntime(date, fetcher, action) {
   const saved = Object.fromEntries(["CRON_SECRET", "TELEGRAM_BOT_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"]
     .map((key) => [key, process.env[key]]));
   global.Date = class extends RealDate {
-    constructor(...args) { super(...(args.length ? args : [`${date}T07:25:00Z`])); }
-    static now() { return new RealDate(`${date}T07:25:00Z`).getTime(); }
+    constructor(...args) { super(...(args.length ? args : [`${date}T07:00:00Z`])); }
+    static now() { return new RealDate(`${date}T07:00:00Z`).getTime(); }
   };
   global.fetch = fetcher;
   Object.assign(process.env, {
@@ -46,7 +46,7 @@ function cronRequest(authorization = "Bearer test-cron-secret") {
     method: "GET",
     headers: {
       authorization,
-      "x-vercel-cron-schedule": "25 7 * * 2",
+      "x-vercel-cron-schedule": "0 7 * * 2",
     },
   };
 }

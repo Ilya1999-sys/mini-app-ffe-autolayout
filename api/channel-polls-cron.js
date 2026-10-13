@@ -2,7 +2,7 @@ const { getBotToken, secureEquals, telegramApi } = require("../lib/telegram");
 const { attemptLimitEnabled, redisCommand } = require("../lib/attempts");
 const { BOT_USERNAME, CHANNEL_USERNAME, pollForUtcDate } = require("../lib/channel-polls");
 
-const REQUIRED_SCHEDULE = "25 7 * * 2";
+const REQUIRED_SCHEDULE = "0 7 * * 2";
 
 async function checkPostingRights(token) {
   const bot = await telegramApi("getMe", {}, token);
